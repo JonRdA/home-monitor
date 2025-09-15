@@ -1,0 +1,66 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # --- Infrastructure Services ---
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883" # Standard MQTT port
+      - "9001:9001" # For MQTT over WebSockets (optional)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+  influxdb:
+    image: influxdb:2.7
+    container_name: influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2 # This keeps your DB data safe!
+    environment:
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      - DOCKER_INFLUXDB_INIT_USERNAME=${INFLUXDB_ADMIN_USER}
+      - DOCKER_INFLUXDB_INIT_PASSWORD=${INFLUXDB_ADMIN_PASSWORD}
+      - DOCKER_INFLUXDB_INIT_ORG=${INFLUXDB_ORG}
+      - DOCKER_INFLUXDB_INIT_BUCKET=${INFLUXDB_BUCKET}
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=${INFLUXDB_TOKEN}
+
+  # --- Custom Python Services ---
+  # db_logger:
+  #   build: ./services/db_logger
+  #   container_name: db_logger
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - mosquitto
+  #     - influxdb
+  #   environment:
+  #     - MQTT_BROKER_HOST=mosquitto
+  #     - INFLUXDB_URL=http://influxdb:8086
+  #     - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+  #     - INFLUXDB_ORG=${INFLUXDB_ORG}
+  #     - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+  
+  # Add other services like sensor_reader, web_app, etc. here later
+  # For example:
+  # web_app:
+  #   build: ./web_app
+  #   container_name: web_app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "8000:8000"
+  #   depends_on:
+  #     - influxdb
+  #   environment:
+  #     - INFLUXDB_URL=http://influxdb:8086
+  #     - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+  #     - INFLUXDB_ORG=${INFLUXDB_ORG}
+
+
+volumes:
+  influxdb_data: # Defines a managed volume for the database
