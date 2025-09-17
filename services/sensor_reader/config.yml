@@ -1,0 +1,24 @@
+# General device configuration
+device_id: "raspberrypi-livingroom"
+location: "living-room"
+read_interval_seconds: 60 # Run every 60 seconds, on the minute mark
+
+# List of sensors connected to this device
+sensors:
+  - id: "onboard-mock"
+    type: "mock" # 'mock' or 'aht20_bmp280'
+    enabled: true
+
+  - id: "system-monitor"
+    type: "system"
+    enabled: false
+
+  - id: "aht20-bmp280-main"
+    type: "aht20_bmp280"
+    enabled: false
+    # You could add sensor-specific config here, like an I2C address
+    # i2c_address: 0x76
+
+  - id: "attic-sensor"
+    type: "mock" # Pretend this is another sensor
+    enabled: false # This sensor will be ignored by the application

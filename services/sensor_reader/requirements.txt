@@ -1,0 +1,4 @@
+paho-mqtt
+PyYAML
+adafruit-circuitpython-ahtx0
+adafruit-circuitpython-bmp280
