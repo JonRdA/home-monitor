@@ -67,6 +67,39 @@ This entire system is designed to run using Docker, which simplifies setup and e
 * **`web_app` (FastAPI)**: A Python service that provides a read-only REST API to fetch historical data from InfluxDB.
 * **`telegram_bot`**: A Python service that interacts with users via Telegram. It uses the API for historical data and subscribes to MQTT for real-time alerts.
 
+### Data Structure
+
+The system uses a standardized data structure for consistency across MQTT messaging and database storage.
+
+#### InfluxDB Structure
+
+-   **Bucket**: `home_monitoring`
+-   **Measurement**: `environment`
+-   **Tags (Metadata for filtering/grouping)**:
+    -   `device_id`: The unique name of the physical device (e.g., `raspberrypi-livingroom`).
+    -   `sensor_id`: The specific sensor on the device (e.g., `bme688-onboard`).
+    -   `location`: A human-readable location tag (e.g., `living-room`).
+-   **Fields (The measured values)**:
+    -   `temperature_1`, `temperature_2`, `pressure`, `humidity`, `dew_point`, etc.
+
+#### MQTT Structure
+
+-   **Topic Hierarchy**: `domain/device_id/sensor_id/data_type`
+    -   *Example*: `home/raspberrypi-livingroom/bme688-onboard/environment`
+-   **Message Payload**: A self-contained JSON object is used as the message payload.
+    ```json
+    {
+      "device_id": "raspberrypi-livingroom",
+      "sensor_id": "bme688-onboard",
+      "location": "living-room",
+      "values": {
+        "temperature_1": 21.5,
+        "humidity": 55.2
+      },
+      "timestamp": 1663435607123456789
+    }
+    ```
+
 # todo
 Phase 0: Foundation & Setup (The "Hello, World!" of Infrastructure)
 1. [ ] Install Docker and Docker Compose on your Raspberry Pi.
