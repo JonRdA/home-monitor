@@ -1,7 +1,7 @@
 # General device configuration
 device_id: "raspberrypi-livingroom"
 location: "living-room"
-read_interval_seconds: 60 # Run every 60 seconds, on the minute mark
+read_interval_seconds: 10 # Run every 60 seconds, on the minute mark
 
 # List of sensors connected to this device
 sensors:

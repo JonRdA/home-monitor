@@ -35,7 +35,7 @@ def load_sensors(config: dict) -> List[Sensor]:
     """Loads all enabled sensor instances from the configuration."""
     sensors = []
     for sensor_conf in config.get("sensors", []):
-        if sensor_conf.get("enabled", False):
+        if sensor_conf.get("enabled", True):
             try:
                 sensor = get_sensor(sensor_conf)
                 sensors.append(sensor)
@@ -63,14 +63,14 @@ def publish_reading(client: mqtt.Client, device_id: str, location: str, sensor_i
     """Formats and publishes a sensor reading to MQTT."""
     # --- Data Enrichment ---
     # Example: A more accurate dew point calculation
-    if "temperature_2" in values and "humidity" in values:
-        t = values["temperature_2"]
-        rh = values["humidity"]
-        # Magnus formula approximation
-        b, c = 17.62, 243.12
-        gamma = (b * t) / (c + t) + ((rh / 100))
-        dew_point = (c * gamma) / (b - gamma)
-        values["dew_point"] = round(dew_point, 2)
+    # if "temperature_2" in values and "humidity" in values:
+    #     t = values["temperature_2"]
+    #     rh = values["humidity"]
+    #     # Magnus formula approximation
+    #     b, c = 17.62, 243.12
+    #     gamma = (b * t) / (c + t) + ((rh / 100))
+    #     dew_point = (c * gamma) / (b - gamma)
+    #     values["dew_point"] = round(dew_point, 2)
 
     # --- Payload Construction ---
     payload = {
@@ -98,6 +98,23 @@ def sleep_until_next_interval(interval_seconds: int):
     logger.debug(f"Sleeping for {sleep_duration:.2f} seconds.")
     time.sleep(sleep_duration)
 
+def get_snapped_timestamp_ns(interval_seconds: int) -> int:
+    """
+    Calculates the timestamp for the beginning of the current interval.
+    For example, at 14:32:18 with a 60s interval, this will return the
+    timestamp for 14:32:00.
+    
+    Returns:
+        Unix timestamp in nanoseconds.
+    """
+    now_ns = time.time_ns()
+    interval_ns = interval_seconds * 1_000_000_000
+    
+    # Use integer division to find the start of the current interval window
+    snapped_timestamp_ns = (now_ns // interval_ns) * interval_ns
+    
+    return snapped_timestamp_ns
+
 
 # --- Main Application ---
 def main():
@@ -113,10 +130,12 @@ def main():
         logger.error("No enabled sensors found in configuration. Exiting.")
         return
 
-    mqtt_client = connect_mqtt(client_id=f"sensor-reader-{device_id}")
+    # mqtt_client = connect_mqtt(client_id=f"sensor-reader-{device_id}")
 
     logger.info(f"Starting measurement loop. Interval: {read_interval} seconds.")
     while True:
+        # Calculate the timestamp for this measurement run ONCE
+        run_timestamp_ns = get_snapped_timestamp_ns(read_interval)
         for sensor in sensors:
             reading_values = sensor.read()
             if reading_values is not None:
@@ -125,7 +144,8 @@ def main():
                     device_id=device_id,
                     location=location,
                     sensor_id=sensor.id, # We'll need to add an 'id' to our sensor objects
-                    values=reading_values
+                    values=reading_values,
+                    timestamp_ns=run_timestamp_nstimes
                 )
             else:
                 logger.warning(f"Failed to get reading from sensor: {sensor.id}")

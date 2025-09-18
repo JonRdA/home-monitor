@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 
 def load_config():
     """Loads configuration from a YAML file."""
-    config_path = os.environ.get("CONFIG_PATH", "config.yml")
+    config_path = os.environ.get("CONFIG_PATH", "services/sensor_reader/config.yml")
     logger.info(f"Loading configuration from {config_path}")
     try:
         with open(config_path, "r") as f:
