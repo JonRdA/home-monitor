@@ -1,5 +1,8 @@
+import logging
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class Sensor(ABC):

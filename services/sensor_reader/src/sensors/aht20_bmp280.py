@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Optional
 
 from .abstract_sensor import Sensor
@@ -9,6 +10,8 @@ from .abstract_sensor import Sensor
 # import adafruit_ahtx0
 # import adafruit_bmp280
 
+logger = logging.getLogger(__name__)
+
 class AHT20_BMP280_Sensor(Sensor):
     """A sensor class for the AHT20 + BMP280 sensor combo."""
 
@@ -18,18 +21,18 @@ class AHT20_BMP280_Sensor(Sensor):
             # self.i2c = board.I2C()  # uses board.SCL and board.SDA
             # self.aht20 = adafruit_ahtx0.AHTx0(self.i2c)
             # self.bmp280 = adafruit_bmp280.Adafruit_BMP280_I2C(self.i2c)
-            print("INFO: Successfully initialized AHT20 and BMP280 sensors.")
+            logger.info("Successfully initialized AHT20 and BMP280 sensors.")
         except Exception as e:
             # self.i2c = None
-            print(f"ERROR: Failed to initialize I2C sensors: {e}")
-            print("ERROR: Will not be able to read real sensor data.")
+            logger.error(f"Failed to initialize I2C sensors: {e}")
+            logger.error("Will not be able to read real sensor data.")
 
     def read(self) -> Optional[Dict[str, float]]:
         """Reads temperature, humidity, and pressure from the I2C sensors."""
         # if not self.i2c:
         #     return None
         
-        print("INFO: Reading from AHT20_BMP280_Sensor...")
+        logger.info("Reading from AHT20_BMP280_Sensor...")
         try:
             # For now, we return mocked data until the hardware is connected.
             # Replace this with real readings.
@@ -45,5 +48,5 @@ class AHT20_BMP280_Sensor(Sensor):
             }
             return data
         except Exception as e:
-            print(f"ERROR: Could not read from I2C sensor: {e}")
+            logger.error(f"Could not read from I2C sensor: {e}", e)
             return None

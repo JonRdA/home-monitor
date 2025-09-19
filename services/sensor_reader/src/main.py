@@ -6,7 +6,9 @@ from datetime import datetime
 from typing import List
 
 import paho.mqtt.client as mqtt
+import yaml
 from config import CONFIG, MQTT_BROKER_HOST
+from constants import LOG_CONF_PATH, LOG_DIR
 from logging_config import setup_logging
 from sensors.abstract_sensor import Sensor
 from sensors.aht20_bmp280 import AHT20_BMP280_Sensor
@@ -16,6 +18,17 @@ from sensors.system import SystemMonitorSensor
 # --- Setup ---
 setup_logging()
 logger = logging.getLogger(__name__)
+
+# Configure logging
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
+# Load logging configuration and inject the dynamic filename
+with open(LOG_CONF_PATH, 'r') as f:
+    log_config = yaml.safe_load(f)
+    logging.config.dictConfig(log_config)
+
+logger = logging.getLogger(__name__)
+logger.debug("Logging configured using logging.yaml")
 
 # --- Helper Functions ---
 def get_sensor(sensor_config: dict) -> Sensor:
@@ -59,7 +72,8 @@ def connect_mqtt(client_id: str) -> mqtt.Client:
         exit(1)
 
 
-def publish_reading(client: mqtt.Client, device_id: str, location: str, sensor_id: str, values: dict):
+def publish_reading(client: mqtt.Client, device_id: str, location: str, sensor_id: str,
+        values: dict, timestamp_ns: int):
     """Formats and publishes a sensor reading to MQTT."""
     # --- Data Enrichment ---
     # Example: A more accurate dew point calculation
@@ -78,7 +92,7 @@ def publish_reading(client: mqtt.Client, device_id: str, location: str, sensor_i
         "sensor_id": sensor_id,
         "location": location,
         "values": values,
-        "timestamp": time.time_ns()
+        "timestamp": timestamp_ns
     }
     topic = f"home/{device_id}/{sensor_id}/environment"
     
@@ -130,7 +144,7 @@ def main():
         logger.error("No enabled sensors found in configuration. Exiting.")
         return
 
-    # mqtt_client = connect_mqtt(client_id=f"sensor-reader-{device_id}")
+    mqtt_client = connect_mqtt(client_id=f"sensor-reader-{device_id}")
 
     logger.info(f"Starting measurement loop. Interval: {read_interval} seconds.")
     while True:
@@ -143,9 +157,9 @@ def main():
                     client=mqtt_client,
                     device_id=device_id,
                     location=location,
-                    sensor_id=sensor.id, # We'll need to add an 'id' to our sensor objects
+                    sensor_id=sensor.id,
                     values=reading_values,
-                    timestamp_ns=run_timestamp_nstimes
+                    timestamp_ns=run_timestamp_ns
                 )
             else:
                 logger.warning(f"Failed to get reading from sensor: {sensor.id}")

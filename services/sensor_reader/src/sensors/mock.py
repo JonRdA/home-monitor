@@ -1,8 +1,10 @@
+import logging
 import random
 from typing import Dict, Optional
 
 from .abstract_sensor import Sensor
 
+logger = logging.getLogger(__name__)
 
 class MockSensor(Sensor):
     """A mock sensor that generates random data for development."""
@@ -12,7 +14,7 @@ class MockSensor(Sensor):
 
     def read(self) -> Optional[Dict[str, float]]:
         """Generates random environmental data."""
-        print("INFO: Reading from MockSensor...")
+        logger.info("Reading from MockSensor...")
         data = {
             "temperature_1": round(random.uniform(18.0, 25.0), 2),
             "temperature_2": round(random.uniform(18.0, 25.0), 2),
